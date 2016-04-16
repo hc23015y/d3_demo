@@ -1,0 +1,150 @@
+<!DOCTYPE html>
+<html>
+<head>
+	<meta charset="utf-8">
+	<meta name="viewport" content="width=device-width, initial-scale=1">
+	<title></title>
+	<script src="http://d3js.org/d3.v3.min.js" charset="utf-8"></script>
+	<style>
+		body {
+			background-color: #F5DEB3;
+		}
+
+		svg path , svg line {
+			fill: none;
+			stroke: black;
+			shape-rendering: crispEdges;
+		}
+
+		svg text {
+			font-family: sans-serif;
+			font-size: 11px;
+		}
+
+	</style>
+	<script>
+		(function Main(_docu,_win){
+			var _width = 800;
+			var _height = 600;
+			var padding = 50;
+			var dataTotal = 200;
+			var canvas;
+			
+			var init = function(){
+				_win.onload = loaded;
+			}
+
+			var loaded = function(){
+				canvas = d3.select("body")
+					.append("svg").attr({"width":_width,"height":_height});
+				draw();	
+			}
+
+			var draw = function(){
+				var datas = doDatas();
+				//console.log(datas);
+				
+				canvas.selectAll("g").remove();
+
+				var xScale = d3.scale.linear()
+								.domain([0,d3.max(datas,function(d){return d[0];})])
+								.range([padding,_width-padding]);
+				var yScale = d3.scale.linear()
+								.domain([0,d3.max(datas,function(d){return d[1];})])
+								.range([_height-padding,padding]);	
+				var rScale = d3.scale.sqrt()
+								.domain([0,d3.max(datas,function(d){return d[2];})])
+								.range([2,20]);
+				var fillRange = d3.scale.linear()
+								.domain([0,d3.max(datas,function(d){return d[2]+1;})])
+								.range([0,10]);										
+				var fillColor = d3.scale.category10();
+
+				var rectsExist = canvas.selectAll("circle").data(datas);
+				var rectsEnter = rectsExist.enter().append("circle");
+
+				doOneDataActive(rectsExist,xScale,yScale,rScale,fillRange,fillColor,datas);		
+				doOneDataActive(rectsEnter,xScale,yScale,rScale,fillRange,fillColor,datas);
+
+				var xAxis = d3.svg.axis()
+								.scale(xScale)
+								.orient("bottom");
+
+				canvas.append("g").call(xAxis)
+					.attr("transform","translate(0,"+(_height-padding)+")");	
+
+				var yAxis = d3.svg.axis()
+								.scale(yScale)
+								.orient("left");
+
+				canvas.append("g").call(yAxis)
+					.attr("transform","translate("+padding+",0)");		
+
+				setTimeout(redraw,7*1000);
+			}
+
+			var redraw = function(){
+				canvas.selectAll("circle")
+					.transition().duration(500).ease("cubic-out")
+					.attr("cy",function(){
+							//var my = d3.select(this);
+							return (d3.select(this).attr("cy")*1-50);
+						})
+					.transition().duration(500).ease("cubic-in")
+					.attr("cy",_height+50);
+
+
+				setTimeout(draw,2*1000);
+			}
+
+			var doOneDataActive = function(rects,xScale,yScale,rScale,fillRange,fillColor,datas){
+				rects.transition().duration(3000).ease('bounce')
+						.delay(function(d, i){ return i / datas.length*1000})
+
+						.each("start",function(){
+							d3.select(this).attr({
+								"cy": ((_height-padding*2)/2),
+								"cx": ((_width-padding*2)/2),
+								"r" : 1
+							});
+						})
+
+						.attr("cx",function(d){ return xScale(d[0]);})
+						.attr("cy",function(d){ return yScale(d[1]);})
+						.attr("r",function(d){ 
+									var r = rScale(d[2]);
+									//console.log(d[2]+"===>"+r); 
+									return r;})
+						.attr("fill",function(d){var r = Math.ceil(fillRange(d[2]));
+									//console.log(r+"===>"+fillColor(r)); 
+									return fillColor(r);})
+						.attr("stroke","black");
+			}
+
+			var doDatas = function(){
+				var datas = [];
+				var xMax = 200;
+				var yMax = 100;
+
+				for(var i=0;i<dataTotal;i++){
+					var x = Math.floor(Math.random() * xMax);
+					var y = Math.floor(Math.random() * yMax);
+					var r = Math.pow(x,2)+Math.pow(y,2)+y*50;
+					datas.push([x,y,r]);
+				}
+
+				return datas;
+			}
+			/*
+			var doDatas2 = function(){
+				return [[1,2,5],[3,4,25],[5,5,50],[3,6,45]];
+			}
+			*/
+
+			init();
+		})(document,window);				
+	</script>
+</head>
+<body>
+</body>
+</html>
