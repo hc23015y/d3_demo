@@ -1,0 +1,8 @@
+git clone https://github.com/hc23015y/d3_demo.git
+git remote add origin https://github.com/hc23015y/d3_demo.git
+
+git add XXX.html 
+git add .
+git commit -m "action"
+
+git push -u origin master
