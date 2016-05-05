@@ -22,7 +22,7 @@
 		var w = 1370;
 		var h = 390;
 		var max = 100;
-		var count = 60; 
+		var count = 30; 
 		var canvas,xscale,yscale,color;
 		var animeTime = 800;
 		var lastdata ;
@@ -46,13 +46,6 @@
 			var data = d3.range(count).map(function(){ return 0;});
 
 			//console.log(data);
-
-			canvas = d3.select("body").append("svg")
-				.attr("width",width)
-				.attr("height",height)
-				.append("g")
-					.attr("transform","translate(30, 30)");
-
 			xscale=d3.scale.ordinal().domain(d3.range(count)).rangeRoundBands([0, w], 0.1);	
 			yscale=d3.scale.linear().domain([0, max+10]).range([0, h]);
 			color =d3.scale.linear().domain([0, max]).rangeRound([50 , 255]);	
@@ -62,7 +55,7 @@
 				.data(d3.range(count))
 				.enter()
 				.append('rect')	
-					.attr('x',function(d,i){ return xscale(i);})
+					.attr('x',function(d,i){ return xscale(i);})				
 					.attr('y',h)
 					.attr('width',function(d){ return xscale.rangeBand();})	
 					.attr('height',0)
@@ -88,7 +81,7 @@
 						'x': function(d,i){ return xscale(i)+xscale.rangeBand()/2;},
 						'y': (h + 20),
 						'font-family': 'georgia, helvetica',
-						'font-size': ((count>50)? '0.5em':'1.5em'),
+						//'font-size': ((count>50)? '0.5em':'1.5em'),
 						'fill': 'rgb(0, 0, 100 )',
 						'text-anchor': 'middle'
 					});
@@ -97,25 +90,32 @@
 		}
 
 		var draw = function(){
-
+			initCanvas();
 			var data = randNum(count);//[10,21,13,12,14,15,7,23,14,44,32,35,21,33,25,12,32,21];
 
-			canvas.selectAll('rect')
-				.data(data)
-					.transition().duration(animeTime).ease("linear")//.ease("linear")
+			var rects = canvas.selectAll('rect').data(data);
+				rects.transition().duration(animeTime).ease("linear")//.ease("linear")
+					.attr('x',function(d,i){ return xscale(i);})
+					.attr('width',function(d){ return xscale.rangeBand();})	
 					.attr('y',function(d){ return h-yscale(d);})
 					.attr('height',function(d){ return yscale(d);})
 					.attr("fill",function(d) {return 'rgb(0, '+color(d)+', 0 )';});
 
-			var texts = canvas.selectAll('text')
-				.data(data)
-					.attr("fill",function(d,i) {return 'rgb(0, 0, '+(255-color(d))+' )';});
+			var texts = canvas.selectAll('text').data(data);
+				texts.attr('font-size',((count>50)? '0.5em':'1.5em'))
+					 //.attr("x",function(d,i){ return xscale(i)+xscale.rangeBand()/2;})
+					 .attr("fill",function(d,i) {return 'rgb(0, 0, '+(255-color(d))+' )';});
 
-			var total = 20;		
+			var total = 20;	
+			var textMotion = texts;	
 			for(var s=0;s<total;s++){
-				texts = texts.transition().duration(animeTime/total)//.ease("linear")
+				textMotion = textMotion.transition().duration(animeTime/total)//.ease("linear")
+						.attr("x",function(d,i){ return xscale(i)+xscale.rangeBand()/2;})
 						.text(function(d,i){ return motionText(d,i,total,s); });
-			}				
+			}		
+
+			rects.exit().remove();
+			texts.exit().remove();		
 
 			lastdata = data;		
 			drawTimer = setTimeout(draw,animeTime*1.5);	
@@ -135,11 +135,24 @@
 
 
 		window.onload = function(){
-			initCanvas();
+			document.getElementById("count").value = count;
+			document.getElementById("btn").onclick = function(){
+				count = document.getElementById("count").value;
+			}
+
+			canvas = d3.select("body").append("svg")
+				.attr("width",width)
+				.attr("height",height)
+				.append("g")
+					.attr("transform","translate(30, 30)");
+
+			//initCanvas();		
 			draw();
 		}
 	</script>	
 </head>
 <body>
+<input type="text" id="count" value="0" />
+<button id="btn">set</button>
 </body>
 </html>		
