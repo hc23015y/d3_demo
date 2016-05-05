@@ -1,0 +1,145 @@
+<!DOCTYPE html>
+<html>
+<head>
+	<title>D3 practice</title>
+	<script src="http://d3js.org/d3.v3.min.js"></script>
+	<style>
+		
+		svg rect:hover {
+			fill: orange;
+		}
+
+		svg rect {
+			-moz-transition : all 0.5s;
+			-o-transition : all 0.5s;
+			-webkit-transition : all 0.5s;
+			transition : all 0.5s;
+		}
+	</style>
+	<script>
+		var width = 1400;
+		var height = 450;
+		var w = 1370;
+		var h = 390;
+		var max = 100;
+		var count = 60; 
+		var canvas,xscale,yscale,color;
+		var animeTime = 800;
+		var lastdata ;
+		var drawTimer;
+
+		var randNum = function(count){
+			var out = new Array();
+			for(var i=0;i<count;i++){
+				var tmp = Math.floor(Math.random()*max);
+				if(tmp<15) tmp += Math.floor(Math.random()*(max/2));
+				if(tmp<7) tmp = Math.floor(Math.pow(tmp,3));
+				if(tmp<3) tmp = 3;
+				if(tmp>=100) tmp = 99; 
+
+				out.push(tmp);
+			}
+			return out;
+		}	
+
+		var initCanvas = function(){
+			var data = d3.range(count).map(function(){ return 0;});
+
+			//console.log(data);
+
+			canvas = d3.select("body").append("svg")
+				.attr("width",width)
+				.attr("height",height)
+				.append("g")
+					.attr("transform","translate(30, 30)");
+
+			xscale=d3.scale.ordinal().domain(d3.range(count)).rangeRoundBands([0, w], 0.1);	
+			yscale=d3.scale.linear().domain([0, max+10]).range([0, h]);
+			color =d3.scale.linear().domain([0, max]).rangeRound([50 , 255]);	
+			//color =d3.scale.ordinal().range(["red","blue","green","orange","gray"]);	
+		
+			canvas.selectAll('rect')
+				.data(d3.range(count))
+				.enter()
+				.append('rect')	
+					.attr('x',function(d,i){ return xscale(i);})
+					.attr('y',h)
+					.attr('width',function(d){ return xscale.rangeBand();})	
+					.attr('height',0)
+					.on("mouseover",function(d){
+						//console.log(this);
+						//d3.select(this).attr("fill", 'rgb('+color(d)+', '+Math.round(color(d)*0.4)+', 0 )');	
+						if(drawTimer) clearTimeout(drawTimer);	
+					})
+					.on("mouseout",function(d){
+						//console.log(this);
+						d3.select(this).attr("fill", 'rgb('+color(d)+', 0 , 0 )');	
+
+						if(drawTimer) clearTimeout(drawTimer);	
+						drawTimer = setTimeout(draw,animeTime*2);
+					})
+
+			canvas.selectAll('text')
+				.data(d3.range(count))
+				.enter()
+				.append('text')	
+					.text(0)
+					.attr({
+						'x': function(d,i){ return xscale(i)+xscale.rangeBand()/2;},
+						'y': (h + 20),
+						'font-family': 'georgia, helvetica',
+						'font-size': ((count>50)? '0.5em':'1.5em'),
+						'fill': 'rgb(0, 0, 100 )',
+						'text-anchor': 'middle'
+					});
+
+			lastdata = data;		
+		}
+
+		var draw = function(){
+
+			var data = randNum(count);//[10,21,13,12,14,15,7,23,14,44,32,35,21,33,25,12,32,21];
+
+			canvas.selectAll('rect')
+				.data(data)
+					.transition().duration(animeTime).ease("linear")//.ease("linear")
+					.attr('y',function(d){ return h-yscale(d);})
+					.attr('height',function(d){ return yscale(d);})
+					.attr("fill",function(d) {return 'rgb(0, '+color(d)+', 0 )';});
+
+			var texts = canvas.selectAll('text')
+				.data(data)
+					.attr("fill",function(d,i) {return 'rgb(0, 0, '+(255-color(d))+' )';});
+
+			var total = 20;		
+			for(var s=0;s<total;s++){
+				texts = texts.transition().duration(animeTime/total)//.ease("linear")
+						.text(function(d,i){ return motionText(d,i,total,s); });
+			}				
+
+			lastdata = data;		
+			drawTimer = setTimeout(draw,animeTime*1.5);	
+			///done		
+		}	
+
+			var motionText = function(d,i,total,step){
+				if(step==9){
+					return d;
+				}else{
+					var old_d = lastdata[i];
+					var diff = Math.floor( ((d - old_d)/total) * (step+1) );
+
+					return (old_d + diff);
+				}
+			}	
+
+
+		window.onload = function(){
+			initCanvas();
+			draw();
+		}
+	</script>	
+</head>
+<body>
+</body>
+</html>		
